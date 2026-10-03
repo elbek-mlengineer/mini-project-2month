@@ -7,7 +7,7 @@ Ushbu modul quyidagi asosiy bosqichlarni o'z ichiga oladi:
 2. Logistik regressiyada Sigmoid hosilasi va Binary Cross-Entropy xatolik funksiyasi gradiyenti.
 3. Gradient Descent orqali logistik regressiya parametrlarini baholash.
 4. ROC egri chizig'i koordinatalarini va AUC (Area Under Curve) ko'rsatkichini
-   noldan (from scratch) hamda scikit-learn yordamida hisoblash.
+   noldan (from scratch) hamda scikit-learn yordamida hisoblash va grafik chizish.
 """
 
 from typing import Tuple
@@ -133,6 +133,10 @@ def calculate_manual_auc(y_true: np.ndarray, y_probs: np.ndarray) -> Tuple[float
         tpr.append(true_positives / num_positives)
         fpr.append(false_positives / num_negatives)
 
+    # Egri chiziq (1, 1) nuqtaga to'liq yetib borishi uchun qo'shiladi
+    tpr.append(1.0)
+    fpr.append(1.0)
+
     # Egrichiziq ostidagi maydon (AUC) trapetsiyalar usulida integrallanadi
     auc_val = float(np.trapezoid(tpr, fpr))
     return auc_val, tpr, fpr
@@ -188,12 +192,26 @@ def run_logistic_regression() -> None:
     print(f"[O'qitish] Bashorat qilingan ehtimolliklar: {np.round(y_probabilities, 3)}")
 
     # 2.3. ROC-AUC hisoblash va natijalarni tekshirish
-    manual_auc, _, _ = calculate_manual_auc(y_train, y_probabilities)
+    manual_auc, tpr, fpr = calculate_manual_auc(y_train, y_probabilities)
     sklearn_auc = float(roc_auc_score(y_train, y_probabilities))
 
     print(f"\n[Metrika] Noldan hisoblangan AUC: {manual_auc:.4f}")
     print(f"[Metrika] Scikit-learn orqali hisoblangan AUC: {sklearn_auc:.4f}")
     print(f"[Validatsiya] Natijalar o'zaro mos keldimi?: {np.isclose(manual_auc, sklearn_auc)}")
+
+    # 2.4. ROC egri chizig'ini vizualizatsiya qilish
+    plt.figure(figsize=(7, 6))
+    plt.plot(fpr, tpr, marker="o", color="blue", linewidth=2, label=f"ROC egri chizig'i (AUC = {manual_auc:.4f})")
+    plt.plot([0, 1], [0, 1], color="red", linestyle="--", label="Tasodifiy taxmin (Random Guess)")
+    plt.xlim([-0.05, 1.05])
+    plt.ylim([-0.05, 1.05])
+    plt.xlabel("False Positive Rate (FPR)", fontsize=11)
+    plt.ylabel("True Positive Rate (TPR)", fontsize=11)
+    plt.title("ROC Egri Chizig'i (Noldan hisoblangan)", fontsize=12)
+    plt.legend(loc="lower right")
+    plt.grid(True, linestyle="--", alpha=0.6)
+    plt.tight_layout()
+    plt.show()
 
 
 # ==============================================================================
